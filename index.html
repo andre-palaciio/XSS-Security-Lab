@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Security Lab - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+            border-bottom: 1px solid #1a1a1a;
+            padding: 20px 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .badge {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 1px solid #333;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+            line-height: 1.1;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            color: #888;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .warning-banner {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 100%);
+            border: 1px solid #3a2a2a;
+            border-left: 3px solid #ff4444;
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .warning-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .warning-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ff6666;
+        }
+
+        .warning-content p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 36px;
+            }
+        }
+
+        .card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            transition: border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #2a2a2a;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: #000000;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 14px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #ffffff;
+            background: #0a0a0a;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: -0.3px;
+        }
+
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .btn-primary:hover {
+            background: #e0e0e0;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #2a2a2a;
+        }
+
+        .btn-secondary:hover {
+            background: #2a2a2a;
+        }
+
+        .output-container {
+            background: #000000;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #ffffff;
+            overflow-x: auto;
+        }
+
+        .output-container:empty::before {
+            content: "// Esperando input...";
+            color: #444;
+            font-style: italic;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            background: #000000;
+            border: 1px solid #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #ffffff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .examples-section {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 24px;
+        }
+
+        .examples-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .examples-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .examples-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .example-item {
+            background: #000000;
+            border: 1px solid #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .example-item:hover {
+            border-color: #ffffff;
+            transform: translateX(4px);
+        }
+
+        .example-number {
+            background: #1a1a1a;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .example-content {
+            flex: 1;
+        }
+
+        .example-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .example-code {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #888;
+            word-break: break-all;
+        }
+
+        .info-section {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 40px;
+        }
+
+        .info-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-item {
+            display: flex;
+            gap: 12px;
+        }
+
+        .info-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .info-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .info-content p {
+            font-size: 13px;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 24px;
+            border-top: 1px solid #1a1a1a;
+            margin-top: 60px;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .attack-log {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            background: #000000;
+            border-left: 2px solid #ff4444;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .log-time {
+            color: #666;
+            margin-right: 8px;
+        }
+
+        .log-message {
+            color: #ff6666;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .switch.active {
+            background: #ffffff;
+        }
+
+        .switch-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #666;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .switch.active .switch-handle {
+            left: 26px;
+            background: #000;
+        }
+
+        .switch-label {
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">X</div>
+                <span class="logo-text">XSS Security Lab</span>
+            </div>
+            <div class="badge">Educational Demo</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <div class="hero-badge">INTERACTIVE SECURITY DEMONSTRATION</div>
+            <h1>Cross-Site Scripting<br>Vulnerability Demo</h1>
+            <p class="hero-description">
+                Explora cómo funcionan los ataques XSS en un entorno controlado y seguro. 
+                Aprende a identificar y prevenir estas vulnerabilidades críticas.
+            </p>
+        </div>
+
+        <div class="warning-banner">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-content">
+                <h3>Advertencia de Seguridad</h3>
+                <p>Esta es una herramienta educativa diseñada para demostrar vulnerabilidades XSS. El conocimiento aquí presentado debe usarse exclusivamente para mejorar la seguridad de aplicaciones web. El uso malicioso de estas técnicas es ilegal.</p>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Input Vulnerable</h2>
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Sin Protección</span>
+                    </div>
+                </div>
+
+                <div class="toggle-switch">
+                    <div class="switch" id="modeSwitch">
+                        <div class="switch-handle"></div>
+                    </div>
+                    <span class="switch-label" id="modeLabel">Modo Vulnerable</span>
+                </div>
+
+                <form id="xssForm">
+                    <div class="form-group">
+                        <label for="userInput">Ingresa tu payload XSS:</label>
+                        <textarea 
+                            id="userInput" 
+                            placeholder="Ejemplo: &lt;script&gt;alert('XSS Attack!')&lt;/script&gt;"
+                            autocomplete="off"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Ejecutar Payload</button>
+                        <button type="button" id="clearBtn" class="btn-secondary">Limpiar Todo</button>
+                    </div>
+                </form>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="attackCount">0</div>
+                        <div class="stat-label">Ataques</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="blockedCount">0</div>
+                        <div class="stat-label">Bloqueados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="successCount">0</div>
+                        <div class="stat-label">Exitosos</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Output Renderizado</h2>
+                </div>
+                <div class="output-container" id="output"></div>
+
+                <div class="attack-log" id="attackLog"></div>
+            </div>
+        </div>
+
+        <div class="examples-section">
+            <div class="examples-header">
+                <h3 class="examples-title">Payloads XSS Comunes</h3>
+                <span style="font-size: 13px; color: #666;">Haz clic para probar</span>
+            </div>
+            <div class="examples-grid">
+                <div class="example-item" data-payload="&lt;script&gt;alert('XSS Attack!')&lt;/script&gt;">
+                    <div class="example-number">01</div>
+                    <div class="example-content">
+                        <div class="example-title">Script Tag Alert</div>
+                        <div class="example-code">&lt;script&gt;alert('XSS Attack!')&lt;/script&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;img src=x onerror=&quot;alert('XSS via Image')&quot;&gt;">
+                    <div class="example-number">02</div>
+                    <div class="example-content">
+                        <div class="example-title">Image Error Handler</div>
+                        <div class="example-code">&lt;img src=x onerror="alert('XSS via Image')"&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;svg onload=&quot;alert('SVG XSS')&quot;&gt;">
+                    <div class="example-number">03</div>
+                    <div class="example-content">
+                        <div class="example-title">SVG Onload Event</div>
+                        <div class="example-code">&lt;svg onload="alert('SVG XSS')"&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;iframe src=&quot;javascript:alert('Iframe XSS')&quot;&gt;">
+                    <div class="example-number">04</div>
+                    <div class="example-content">
+                        <div class="example-title">JavaScript Protocol</div>
+                        <div class="example-code">&lt;iframe src="javascript:alert('Iframe XSS')"&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;body onload=&quot;alert('Body Onload')&quot;&gt;">
+                    <div class="example-number">05</div>
+                    <div class="example-content">
+                        <div class="example-title">Body Onload Event</div>
+                        <div class="example-code">&lt;body onload="alert('Body Onload')"&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;input onfocus=&quot;alert('Input Focus')&quot; autofocus&gt;">
+                    <div class="example-number">06</div>
+                    <div class="example-content">
+                        <div class="example-title">Input Autofocus Attack</div>
+                        <div class="example-code">&lt;input onfocus="alert('Input Focus')" autofocus&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;marquee onstart=&quot;alert('Marquee XSS')&quot;&gt;">
+                    <div class="example-number">07</div>
+                    <div class="example-content">
+                        <div class="example-title">Marquee Event Handler</div>
+                        <div class="example-code">&lt;marquee onstart="alert('Marquee XSS')"&gt;</div>
+                    </div>
+                </div>
+                <div class="example-item" data-payload="&lt;details open ontoggle=&quot;alert('Details XSS')&quot;&gt;">
+                    <div class="example-number">08</div>
+                    <div class="example-content">
+                        <div class="example-title">Details Toggle Event</div>
+                        <div class="example-code">&lt;details open ontoggle="alert('Details XSS')"&gt;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3 class="info-title">¿Cómo Protegerse de XSS?</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">🛡️</div>
+                    <div class="info-content">
+                        <h4>Sanitización de Input</h4>
+                        <p>Siempre valida y sanitiza el input del usuario antes de procesarlo. Usa librerías como DOMPurify.</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">🔒</div>
+                    <div class="info-content">
+                        <h4>Content Security Policy</h4>
+                        <p>Implementa CSP headers para controlar qué recursos pueden ejecutarse en tu sitio.</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">⚡</div>
+                    <div class="info-content">
+                        <h4>Escapar Output</h4>
+                        <p>Usa textContent en lugar de innerHTML, o escapa caracteres especiales HTML.</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">🔐</div>
+                    <div class="info-content">
+                        <h4>HTTPOnly Cookies</h4>
+                        <p>Marca las cookies sensibles como HTTPOnly para prevenir acceso via JavaScript.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p class="footer-text">XSS Security Lab © 2025 | Herramienta Educativa | Usa este conocimiento responsablemente</p>
+    </footer>
+
+    <script>
+        let attackCount = 0;
+        let blockedCount = 0;
+        let successCount = 0;
+        let isVulnerableMode = true;
+
+        // Toggle entre modo vulnerable y seguro
+        const modeSwitch = document.getElementById('modeSwitch');
+        const modeLabel = document.getElementById('modeLabel');
+
+        modeSwitch.addEventListener('click', function() {
+            isVulnerableMode = !isVulnerableMode;
+            this.classList.toggle('active');
+            
+            if (isVulnerableMode) {
+                modeLabel.textContent = 'Modo Vulnerable';
+                modeLabel.style.color = '#888';
+            } else {
+                modeLabel.textContent = 'Modo Protegido';
+                modeLabel.style.color = '#4ade80';
+            }
+        });
+
+        // Función para agregar log
+        function addLog(message, type = 'attack') {
+            const logContainer = document.getElementById('attackLog');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            const time = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-message">${message}</span>
+            `;
+            
+            logContainer.insertBefore(logEntry, logContainer.firstChild);
+            
+            // Mantener solo los últimos 5 logs
+            while (logContainer.children.length > 5) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        // Función para actualizar estadísticas
+        function updateStats() {
+            document.getElementById('attackCount').textContent = attackCount;
+            document.getElementById('blockedCount').textContent = blockedCount;
+            document.getElementById('successCount').textContent = successCount;
+        }
+
+        // Función para sanitizar HTML
+        function sanitizeHTML(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+
+        // Manejo del formulario
+        document.getElementById('xssForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const userInput = document.getElementById('userInput').value.trim();
+            const outputDiv = document.getElementById('output');
+            
+            if (!userInput) {
+                outputDiv.innerHTML = '<span style="color: #666; font-style: italic;">// Por favor ingresa un payload</span>';
+                return;
+            }
+
+            attackCount++;
+            
+            if (isVulnerableMode) {
+                // MODO VULNERABLE: Usando innerHTML sin sanitización
+                try {
+                    outputDiv.innerHTML = userInput;
+                    successCount++;
+                    addLog('⚠️ Payload ejecutado exitosamente (modo vulnerable)', 'success');
+                } catch (e) {
+                    addLog('❌ Error al ejecutar payload: ' + e.message, 'error');
+                }
+            } else {
+                // MODO PROTEGIDO: Sanitizando el input
+                outputDiv.textContent = userInput;
+                blockedCount++;
+                addLog('🛡️ Payload bloqueado y sanitizado (modo protegido)', 'blocked');
+            }
+            
+            updateStats();
+        });
+
+        // Botón de limpiar
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.getElementById('userInput').value = '';
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('attackLog').innerHTML = '';
+            addLog('🔄 Sistema reiniciado', 'info');
+        });
+
+        // Hacer clic en los ejemplos para probarlos
+        document.querySelectorAll('.example-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                const payload = this.getAttribute('data-payload');
+                const textarea = document.getElementById('userInput');
+                textarea.value = payload;
+                
+                // Animar el textarea
+                textarea.style.borderColor = '#ffffff';
+                setTimeout(() => {
+                    textarea.style.borderColor = '#2a2a2a';
+                }, 500);
+                
+                // Auto-submit después de un breve delay
+                setTimeout(() => {
+                    document.getElementById('xssForm').dispatchEvent(new Event('submit'));
+                }, 300);
+            });
+        });
+
+        // Mensaje de consola
+        console.log('%c⚠️ XSS Security Lab', 'color: #ffffff; font-size: 24px; font-weight: bold; background: #000; padding: 10px;');
+        console.log('%c🔒 Esta es una demostración educativa', 'font-size: 14px; color: #888;');
+        console.log('%c📚 Aprende a proteger tus aplicaciones web', 'font-size: 14px; color: #888;');
+        
+        // Log inicial
+        addLog('✅ Sistema iniciado - Listo para demostración', 'info');
+    </script>
+</body>
+</html>
